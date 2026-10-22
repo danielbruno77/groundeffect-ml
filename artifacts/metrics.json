@@ -1,0 +1,187 @@
+{
+  "dataset": "c9158e509306",
+  "metrics": {
+    "cl_down": {
+      "r2": 0.9997178751813952,
+      "rmse": 0.004747825263387509,
+      "mae": 0.003534747590143518,
+      "max_abs": 0.013213369078657333,
+      "mape": 0.0032754090137892254,
+      "coverage_1s": 0.7555555555555555,
+      "coverage_2s": 0.8888888888888888,
+      "nll": -2.2993552230006187,
+      "pair_sign_accuracy": 1.0,
+      "delta_rmse": 0.006771268428767731,
+      "spearman": 0.9988142292490118,
+      "kendall": 0.9878787878787878,
+      "n_pairs": 939.0
+    },
+    "cd": {
+      "r2": 0.9998763245342703,
+      "rmse": 0.0001876135330108225,
+      "mae": 0.00014959125071943862,
+      "max_abs": 0.0004796568687793351,
+      "mape": 0.004896627498795048,
+      "coverage_1s": 0.8444444444444444,
+      "coverage_2s": 1.0,
+      "nll": -7.130529888812114,
+      "pair_sign_accuracy": 0.9959595959595959,
+      "delta_rmse": 0.00026723926105562287,
+      "spearman": 0.9994729907773384,
+      "kendall": 0.9919191919191918,
+      "n_pairs": 990.0
+    },
+    "cm": {
+      "r2": 0.9995985578822187,
+      "rmse": 0.0007549141766239159,
+      "mae": 0.0005889909849527452,
+      "max_abs": 0.0018246826556392592,
+      "mape": 0.005640766064696553,
+      "coverage_1s": 0.7111111111111111,
+      "coverage_2s": 0.9555555555555556,
+      "nll": -5.658179232962572
+    },
+    "cp": {
+      "rmse": 0.008702057506713849,
+      "max_abs": 0.13750647474374733,
+      "rmse_worst_case": 0.022225014268028306
+    },
+    "gp": {
+      "cl_down_r2": 0.9997903385373295,
+      "cl_down_rmse": 0.004092921226949634,
+      "cl_down_mae": 0.0031222582447030245,
+      "cl_down_max_abs": 0.012028905911939058,
+      "cl_down_mape": 0.00309603596874611,
+      "cl_down_coverage_1s": 0.7333333333333333,
+      "cl_down_coverage_2s": 0.9777777777777777,
+      "cl_down_nll": -4.161331793583145,
+      "cd_r2": 0.9998562794115777,
+      "cd_rmse": 0.00020224690204268222,
+      "cd_mae": 0.00012860805094356339,
+      "cd_max_abs": 0.0007509121617768066,
+      "cd_mape": 0.0034699219054169753,
+      "cd_coverage_1s": 0.7111111111111111,
+      "cd_coverage_2s": 0.8888888888888888,
+      "cd_nll": -7.19166801610872,
+      "cm_r2": 0.9997553322115409,
+      "cm_rmse": 0.000589351660905989,
+      "cm_mae": 0.0004813286020356918,
+      "cm_max_abs": 0.0012629607643963592,
+      "cm_mape": 0.004637312282518561,
+      "cm_coverage_1s": 0.7777777777777778,
+      "cm_coverage_2s": 0.9777777777777777,
+      "cm_nll": -5.9970766579827295
+    },
+    "reference": {
+      "cl_down_gci_abs": 0.013089297220009614,
+      "n_train": 235,
+      "n_test": 45,
+      "pod_modes": 10
+    }
+  },
+  "gates": [
+    {
+      "name": "cl_down.rmse",
+      "value": 0.004747825263387509,
+      "threshold": 0.013,
+      "op": "max",
+      "passed": true
+    },
+    {
+      "name": "cl_down.mape",
+      "value": 0.0032754090137892254,
+      "threshold": 0.01,
+      "op": "max",
+      "passed": true
+    },
+    {
+      "name": "cl_down.r2",
+      "value": 0.9997178751813952,
+      "threshold": 0.995,
+      "op": "min",
+      "passed": true
+    },
+    {
+      "name": "cl_down.coverage_2s",
+      "value": 0.8888888888888888,
+      "threshold": 0.85,
+      "op": "min",
+      "passed": true
+    },
+    {
+      "name": "cl_down.pair_sign_accuracy",
+      "value": 1.0,
+      "threshold": 0.98,
+      "op": "min",
+      "passed": true
+    },
+    {
+      "name": "cl_down.spearman",
+      "value": 0.9988142292490118,
+      "threshold": 0.99,
+      "op": "min",
+      "passed": true
+    },
+    {
+      "name": "cd.mape",
+      "value": 0.004896627498795048,
+      "threshold": 0.02,
+      "op": "max",
+      "passed": true
+    },
+    {
+      "name": "cd.r2",
+      "value": 0.9998763245342703,
+      "threshold": 0.99,
+      "op": "min",
+      "passed": true
+    },
+    {
+      "name": "cd.pair_sign_accuracy",
+      "value": 0.9959595959595959,
+      "threshold": 0.97,
+      "op": "min",
+      "passed": true
+    },
+    {
+      "name": "cm.r2",
+      "value": 0.9995985578822187,
+      "threshold": 0.99,
+      "op": "min",
+      "passed": true
+    },
+    {
+      "name": "cp.rmse",
+      "value": 0.008702057506713849,
+      "threshold": 0.02,
+      "op": "max",
+      "passed": true
+    },
+    {
+      "name": "cp.rmse_worst_case",
+      "value": 0.022225014268028306,
+      "threshold": 0.05,
+      "op": "max",
+      "passed": true
+    }
+  ],
+  "passed": true,
+  "design_space": {
+    "h_c": [
+      0.08,
+      0.6
+    ],
+    "alpha_deg": [
+      0.0,
+      8.0
+    ],
+    "camber": [
+      0.02,
+      0.06
+    ],
+    "thickness": [
+      0.09,
+      0.15
+    ]
+  }
+}

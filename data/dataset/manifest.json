@@ -1,0 +1,14 @@
+{
+  "params": [
+    "h_c",
+    "alpha_deg",
+    "camber",
+    "thickness"
+  ],
+  "counts": {
+    "test/ok": 45,
+    "test/unconverged": 3,
+    "train/ok": 235,
+    "train/unconverged": 21
+  }
+}

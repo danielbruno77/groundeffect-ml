@@ -1,0 +1,55 @@
+{
+  "seed": 7,
+  "scores": {
+    "spike": {
+      "events": 6,
+      "recall": 1.0,
+      "mean_delay": 0.0,
+      "precision": 1.0,
+      "false_alarms": 0
+    },
+    "drift": {
+      "events": 1,
+      "recall": 1.0,
+      "mean_delay": 24.0,
+      "precision": 1.0,
+      "false_alarms": 0
+    },
+    "step": {
+      "events": 1,
+      "recall": 1.0,
+      "mean_delay": 0.0,
+      "precision": 1.0,
+      "false_alarms": 0
+    },
+    "tap_blocked": {
+      "events": 1,
+      "recall": 1.0,
+      "mean_delay": 20.0,
+      "precision": 1.0,
+      "false_alarms": 0
+    },
+    "config_outlier": {
+      "events": 1,
+      "recall": 1.0,
+      "mean_delay": 0.0,
+      "precision": 1.0,
+      "false_alarms": 0
+    }
+  },
+  "correlation": {
+    "k": 0.9591302098944234,
+    "b": 0.010793525401840037,
+    "sigma": 0.0037707056473896897
+  },
+  "change_point_runs": [
+    39,
+    45,
+    52,
+    54,
+    74,
+    91,
+    102,
+    104
+  ]
+}
