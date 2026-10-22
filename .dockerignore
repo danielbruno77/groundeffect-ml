@@ -1,0 +1,9 @@
+.venv
+runs
+data
+docs
+tests
+.git
+**/__pycache__
+artifacts/ensemble
+artifacts/mgn

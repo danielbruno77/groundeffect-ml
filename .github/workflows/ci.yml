@@ -1,0 +1,64 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+      - run: uv sync --locked
+      - run: uv run ruff check .
+      - run: uv run ruff format --check .
+      - run: uv run mypy src
+
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: gmsh runtime libraries
+        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends libglu1-mesa libxrender1 libxcursor1 libxft2 libxinerama1 libxi6
+      - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+      - run: uv sync --locked --extra cfd
+      - run: uv run pytest --cov --cov-report=term-missing --cov-report=xml
+      - uses: actions/upload-artifact@v4
+        with:
+          name: coverage
+          path: coverage.xml
+
+  cfd-smoke:
+    # Full pipeline on a coarse mesh: gmsh -> gmshToFoam -> simpleFoam -> QA,
+    # checked against physical bounds and a Cp-vs-force consistency test.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: gmsh runtime libraries
+        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends libglu1-mesa libxrender1 libxcursor1 libxft2 libxinerama1 libxi6
+      - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+      - run: uv sync --locked --extra cfd
+      - run: docker pull opencfd/openfoam-default:2512
+      - run: uv run groundeffect smoke --mode docker
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: cfd-smoke-logs
+          path: |
+            runs/smoke/log.*
+            runs/smoke/result.json
