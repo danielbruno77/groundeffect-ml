@@ -1,0 +1,23 @@
+# Release gates for the ensemble surrogate, evaluated on the independent test
+# design. Changing a threshold is a reviewed change, like changing code.
+#
+# Accuracy bars are anchored to the CFD's own numerical uncertainty: the mean
+# medium-mesh GCI of CL in data/grid_study.json is 0.013 (about 1%). A model
+# that misses by more than the mesh does is not fit to rank designs.
+cl_down:
+  rmse: {max: 0.013}
+  mape: {max: 0.01}
+  r2: {min: 0.995}
+  coverage_2s: {min: 0.85}
+  # ranking over pairs whose CFD delta exceeds 2x the GCI floor
+  pair_sign_accuracy: {min: 0.98}
+  spearman: {min: 0.99}
+cd:
+  mape: {max: 0.02}
+  r2: {min: 0.99}
+  pair_sign_accuracy: {min: 0.97}
+cm:
+  r2: {min: 0.99}
+cp:
+  rmse: {max: 0.02}
+  rmse_worst_case: {max: 0.05}
