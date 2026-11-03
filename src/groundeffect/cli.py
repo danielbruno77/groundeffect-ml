@@ -543,36 +543,90 @@ def _mesh_2d(design: WingDesign) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     """Mesh in-process and return the 2D face (z = 0) as nodes / triangles / quads."""
     import tempfile
 
-    import gmsh
-
     from groundeffect.geometry import place_wing
     from groundeffect.meshing import build_mesh
 
     with tempfile.TemporaryDirectory() as tmp:
         msh = Path(tmp) / "m.msh"
         build_mesh(place_wing(design), msh)
-        gmsh.initialize()
-        try:
-            gmsh.option.setNumber("General.Terminal", 0)
-            gmsh.open(str(msh))
-            tags, coords, _ = gmsh.model.mesh.getNodes()
-            xyz = coords.reshape(-1, 3)
-            index = {int(t): i for i, t in enumerate(tags)}
-            tris: list[np.ndarray] = []
-            quads: list[np.ndarray] = []
-            for dim, ent in gmsh.model.getEntities(2):
-                bb = gmsh.model.getBoundingBox(dim, ent)
-                if abs(bb[2]) > 1e-9 or abs(bb[5]) > 1e-9:
-                    continue  # keep only the z = 0 face
-                etypes, _, enodes = gmsh.model.mesh.getElements(dim, ent)
-                for et, en in zip(etypes, enodes, strict=True):
-                    k = {2: 3, 3: 4}.get(int(et))
-                    if k:
-                        conn = np.vectorize(index.get)(en.reshape(-1, k))
-                        (tris if k == 3 else quads).extend(conn)
-        finally:
-            gmsh.finalize()
+        return _read_msh_2d(msh)
+
+
+def _read_msh_2d(msh: Path) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+    """The z = 0 face of an extruded gmsh mesh as nodes / triangles / quads."""
+    import gmsh
+
+    gmsh.initialize()
+    try:
+        gmsh.option.setNumber("General.Terminal", 0)
+        gmsh.open(str(msh))
+        tags, coords, _ = gmsh.model.mesh.getNodes()
+        xyz = coords.reshape(-1, 3)
+        index = {int(t): i for i, t in enumerate(tags)}
+        tris: list[np.ndarray] = []
+        quads: list[np.ndarray] = []
+        for dim, ent in gmsh.model.getEntities(2):
+            bb = gmsh.model.getBoundingBox(dim, ent)
+            if abs(bb[2]) > 1e-9 or abs(bb[5]) > 1e-9:
+                continue  # keep only the z = 0 face
+            etypes, _, enodes = gmsh.model.mesh.getElements(dim, ent)
+            for et, en in zip(etypes, enodes, strict=True):
+                k = {2: 3, 3: 4}.get(int(et))
+                if k:
+                    conn = np.vectorize(index.get)(en.reshape(-1, k))
+                    (tris if k == 3 else quads).extend(conn)
+    finally:
+        gmsh.finalize()
     return xyz[:, :2], np.array(tris), np.array(quads)
+
+
+def _cells_across(nodes: np.ndarray, tris: np.ndarray, quads: np.ndarray, x: float, y0: float, y1: float) -> tuple[int, int]:
+    """Cells (all, prism-layer quads) crossed by the vertical segment x, y0..y1."""
+    from matplotlib.tri import Triangulation
+
+    tri = np.vstack([tris, quads[:, [0, 1, 2]], quads[:, [0, 2, 3]]])
+    cell = np.r_[np.arange(len(tris)), len(tris) + np.arange(len(quads)), len(tris) + np.arange(len(quads))]
+    finder = Triangulation(nodes[:, 0], nodes[:, 1], tri).get_trifinder()
+    hit = np.asarray(finder(np.full(20000, x), np.linspace(y0 + 1e-9, y1 - 1e-9, 20000)), dtype=np.int64)
+    ids = np.unique(cell[hit[hit >= 0]])
+    return len(ids), int(np.sum(ids >= len(tris)))
+
+
+@app.command("mesh-figure")
+def mesh_figure(case: Path = RUNS / "sweep" / "h0.080", out: Path = FIGURES / "mesh_gap.png") -> None:
+    """The solved mesh of one case: whole wing plus a zoom on the ground gap, with its quality numbers."""
+    from groundeffect import report as fig
+    from groundeffect.foam.parse import parse_checkmesh
+    from groundeffect.geometry import place_wing
+
+    res = json.loads((case / "result.json").read_text())
+    design = WingDesign(**res["design"])
+    wing = place_wing(design)
+    nodes, tris, quads = _read_msh_2d(case / "mesh.msh")
+    cm = parse_checkmesh(case / "log.checkMesh")
+    loop = wing.loop()
+    i_low = int(np.argmin(loop[:, 1]))
+    x_low, h = float(loop[i_low, 0]), float(loop[i_low, 1])
+    n_gap, n_layers = _cells_across(nodes, tris, quads, x_low, 0.0, h)
+    stats = {
+        "h_c": design.h_c,
+        "gap_mm": 1000 * h,
+        "cells": cm.cells,
+        "max_non_ortho": cm.max_non_ortho,
+        "max_skewness": cm.max_skewness,
+        "max_aspect": cm.max_aspect,
+        "yplus_mean": res["yplus_wing_mean"],
+        "yplus_max": res["yplus_wing_max"],
+        "cells_across_gap": n_gap,
+        "prism_cells_across_gap": n_layers,
+    }
+    typer.echo(json.dumps(stats, indent=1, default=float))
+    c = wing.chord
+    main = (wing.le[0] - 0.07 * c, wing.te[0] + 0.07 * c, 0.0, 0.62 * c)
+    title = f"Solved mesh at the smallest ride height: h/c = {design.h_c:g} ({1000 * h:.0f} mm gap), α = {design.alpha_deg:g}°, NACA {design.naca_code}"
+    note = f"zoom on the gap: {n_gap} cells across it, {n_layers} of them prism layers"
+    fig.mesh_with_inset(nodes, tris, quads, loop, main, (x_low, h), title, out, note)
+    (out.with_suffix(".json")).write_text(json.dumps(stats, indent=1, default=float))
 
 
 @app.command()

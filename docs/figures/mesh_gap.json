@@ -1,0 +1,12 @@
+{
+ "h_c": 0.08,
+ "gap_mm": 24.000000000000004,
+ "cells": 36963,
+ "max_non_ortho": 42.253514,
+ "max_skewness": 0.58761458,
+ "max_aspect": 66.279421,
+ "yplus_mean": 1.724639,
+ "yplus_max": 3.2700272,
+ "cells_across_gap": 42,
+ "prism_cells_across_gap": 25
+}

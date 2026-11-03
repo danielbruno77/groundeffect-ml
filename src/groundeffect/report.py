@@ -354,3 +354,81 @@ def mesh_zoom(
     ax.set_xlabel("x [m]")
     ax.set_ylabel("y [m] (moving ground at 0)")
     return _save(fig, path)
+
+
+def mesh_with_inset(
+    nodes: np.ndarray,
+    tris: np.ndarray,
+    quads: np.ndarray,
+    wing: np.ndarray,
+    main_box: tuple[float, float, float, float],
+    gap_point: tuple[float, float],
+    title: str,
+    path: Path,
+    inset_note: str = "zoom: ground gap",
+) -> Path:
+    """Whole-wing view of a mesh with a picture-in-picture zoom on the ground gap."""
+    style()
+    from matplotlib.collections import PolyCollection
+    from matplotlib.patches import Polygon
+
+    x0, x1, y0, y1 = main_box
+    fig, ax = plt.subplots(figsize=(11, 11 * (y1 - y0) / (x1 - x0) + 0.6))
+    polys = [nodes[t] for t in tris] + [nodes[q] for q in quads]
+    colors = [SURFACE] * len(tris) + ["#cde2fb"] * len(quads)
+
+    def draw(axis: plt.Axes, lw: float) -> None:
+        axis.add_collection(PolyCollection(polys, facecolors=colors, edgecolors=INK_2, linewidths=lw))
+        axis.add_patch(Polygon(wing, closed=True, facecolor="#3a4658", edgecolor=INK, linewidth=0.8))
+        axis.axhline(0.0, color=INK, linewidth=2.5)
+        axis.set_aspect("equal")
+        axis.grid(False)
+
+    draw(ax, 0.12)
+    ax.set_xlim(x0, x1)
+    ax.set_ylim(y0, y1)
+    ax.set_xlabel("x [m]")
+    ax.set_ylabel("y [m]  (moving ground at 0)")
+    ax.set_title(title)
+
+    # Inset in the free space above the wing, zoom box centred on the gap.
+    top = float(wing[:, 1].max())
+    ins_y = (top - y0) / (y1 - y0) + 0.06
+    ins_h = 0.97 - ins_y
+    ins_w = 0.62
+    axin = ax.inset_axes((0.36, ins_y, ins_w, ins_h))
+    aspect = (ins_w * (x1 - x0)) / (ins_h * (y1 - y0))
+    xg, h = gap_point
+    zh = 1.3 * h
+    zw = zh * aspect
+    draw(axin, 0.35)
+    axin.set_xlim(xg - 0.5 * zw, xg + 0.5 * zw)
+    axin.set_ylim(-0.04 * zh, 0.96 * zh)
+    axin.set_xticks([])
+    axin.set_yticks([])
+    for side in axin.spines.values():
+        side.set_visible(True)
+        side.set_edgecolor(ORANGE)
+        side.set_linewidth(2.0)
+    ax.indicate_inset_zoom(axin, edgecolor=ORANGE, linewidth=1.5, alpha=1.0)
+    axin.annotate("", xy=(xg, 0.0), xytext=(xg, h), arrowprops={"arrowstyle": "<->", "color": ORANGE, "lw": 1.6})
+    axin.text(
+        xg + 0.012 * zw,
+        0.5 * h,
+        f"gap {1000 * h:.0f} mm",
+        color=INK,
+        fontsize=10,
+        va="center",
+        bbox={"boxstyle": "round,pad=0.25", "facecolor": SURFACE, "edgecolor": "none", "alpha": 0.9},
+    )
+    axin.text(
+        0.01,
+        0.97,
+        inset_note,
+        transform=axin.transAxes,
+        color=INK_2,
+        fontsize=9,
+        va="top",
+        bbox={"boxstyle": "round,pad=0.2", "facecolor": SURFACE, "edgecolor": "none", "alpha": 0.9},
+    )
+    return _save(fig, path)
