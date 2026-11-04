@@ -432,3 +432,60 @@ def mesh_with_inset(
         bbox={"boxstyle": "round,pad=0.2", "facecolor": SURFACE, "edgecolor": "none", "alpha": 0.9},
     )
     return _save(fig, path)
+
+
+def mesh_levels(
+    levels: list[tuple[np.ndarray, np.ndarray, np.ndarray, str]],
+    wing: np.ndarray,
+    box: tuple[float, float, float, float],
+    title: str,
+    path: Path,
+) -> Path:
+    """The same window of several meshes side by side: one panel per refinement level."""
+    style()
+    from matplotlib.collections import PolyCollection
+    from matplotlib.patches import Polygon
+
+    x0, x1, y0, y1 = box
+    panel_w = 5.0
+    fig, axes = plt.subplots(1, len(levels), figsize=(panel_w * len(levels), panel_w * (y1 - y0) / (x1 - x0) + 1.1))
+    pad = 0.05 * (x1 - x0)
+    for ax, (nodes, tris, quads, label) in zip(np.atleast_1d(axes), levels, strict=True):
+        cells = [(c, SURFACE) for c in tris] + [(c, "#cde2fb") for c in quads]
+        polys, colors = [], []
+        for conn, color in cells:
+            p = nodes[conn]
+            cx, cy = p.mean(axis=0)
+            if x0 - pad < cx < x1 + pad and y0 - pad < cy < y1 + pad:
+                polys.append(p)
+                colors.append(color)
+        ax.add_collection(PolyCollection(polys, facecolors=colors, edgecolors=INK_2, linewidths=0.25))
+        ax.add_patch(Polygon(wing, closed=True, facecolor="#3a4658", edgecolor=INK, linewidth=0.8))
+        ax.axhline(0.0, color=INK, linewidth=2.5)
+        ax.set_xlim(x0, x1)
+        ax.set_ylim(y0, y1)
+        ax.set_aspect("equal")
+        ax.grid(False)
+        ax.set_xticks([])
+        ax.set_yticks([])
+        for side in ax.spines.values():
+            side.set_visible(True)
+            side.set_edgecolor(AXIS)
+        ax.set_title(label, fontsize=11)
+        # 10 mm scale bar, bottom right, above the ground line
+        sx = x1 - 0.06 * (x1 - x0) - 0.01
+        sy = y0 + 0.05 * (y1 - y0)
+        ax.plot([sx, sx + 0.01], [sy, sy], color=ORANGE, linewidth=3, solid_capstyle="butt")
+        ax.text(
+            sx + 0.005,
+            sy + 0.012 * (y1 - y0) + 0.002,
+            "10 mm",
+            color=INK,
+            fontsize=9,
+            ha="center",
+            va="bottom",
+            bbox={"boxstyle": "round,pad=0.15", "facecolor": SURFACE, "edgecolor": "none", "alpha": 0.9},
+        )
+    fig.suptitle(title, x=0.01, ha="left", fontsize=11.5, fontweight="bold", color=INK)
+    fig.tight_layout()
+    return _save(fig, path)

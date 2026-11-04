@@ -1,0 +1,29 @@
+{
+ "design": "low",
+ "levels": [
+  {
+   "refinement": 0.707,
+   "cells": 19749,
+   "cl_down": 1.1668754271333335,
+   "max_non_ortho": 38.476091,
+   "max_skewness": 0.59206789
+  },
+  {
+   "refinement": 1.0,
+   "cells": 37709,
+   "cl_down": 1.213134491833333,
+   "max_non_ortho": 53.17126,
+   "max_skewness": 0.65456065
+  },
+  {
+   "refinement": 1.414,
+   "cells": 72828,
+   "cl_down": 1.2279707919000002,
+   "max_non_ortho": 60.870738,
+   "max_skewness": 0.58800038
+  }
+ ],
+ "gci_medium": 0.022200351269893753,
+ "order": 3.545041057466709,
+ "cl_extrapolated": 1.234680101318364
+}

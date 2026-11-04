@@ -629,6 +629,58 @@ def mesh_figure(case: Path = RUNS / "sweep" / "h0.080", out: Path = FIGURES / "m
     (out.with_suffix(".json")).write_text(json.dumps(stats, indent=1, default=float))
 
 
+@app.command("gci-mesh-figure")
+def gci_mesh_figure(
+    design: str = "low",
+    root: Path = RUNS / "gci",
+    refinements: str = "0.707,1.0,1.414",
+    out: Path = FIGURES / "gci_meshes.png",
+) -> None:
+    """The three solved meshes of the grid convergence study, side by side on one window."""
+    from groundeffect import report as fig
+    from groundeffect.geometry import place_wing
+
+    levels = sorted(float(x) for x in refinements.split(","))
+    names = ["Coarse", "Medium (production)", "Fine"] if len(levels) == 3 else [f"r = {r:g}" for r in levels]
+    panels, stats = [], []
+    wing = None
+    for r, name in zip(levels, names, strict=True):
+        case = root / f"{design}_r{r:.3f}"
+        res = json.loads((case / "result.json").read_text())
+        wing = place_wing(WingDesign(**res["design"]))
+        nodes, tris, quads = _read_msh_2d(case / "mesh.msh")
+        n = len(tris) + len(quads)
+        panels.append((nodes, tris, quads, f"{name}: {n:,} cells, CL = {res['cl_down']:.4f}"))
+        stats.append(
+            {
+                "refinement": r,
+                "cells": n,
+                "cl_down": res["cl_down"],
+                "max_non_ortho": res["max_non_ortho"],
+                "max_skewness": res["max_skewness"],
+            }
+        )
+    assert wing is not None
+    row = next(g for g in json.loads((DATA / "grid_study.json").read_text()) if g["design"] == design and g["quantity"] == "cl_down")
+    c = wing.chord
+    box = (wing.le[0] - 0.06 * c, wing.le[0] + 0.56 * c, 0.0, 0.48 * c)
+    d = WingDesign(**json.loads((root / f"{design}_r{levels[0]:.3f}" / "result.json").read_text())["design"])
+    title = (
+        f"Grid convergence meshes at h/c = {d.h_c:.2f} (α = {d.alpha_deg:g}°, NACA {d.naca_code}): every length scales by √2 between levels; "
+        f"GCI(medium) = {100 * row['gci_medium']:.1f}%"
+    )
+    fig.mesh_levels(panels, wing.loop(), box, title, out)
+    summary = {
+        "design": design,
+        "levels": stats,
+        "gci_medium": row["gci_medium"],
+        "order": row["order"],
+        "cl_extrapolated": row["phi_extrapolated"],
+    }
+    out.with_suffix(".json").write_text(json.dumps(summary, indent=1, default=float))
+    typer.echo(json.dumps(summary, indent=1, default=float))
+
+
 @app.command()
 def serve(host: str = "127.0.0.1", port: int = 8000) -> None:
     """Serve the exported model over HTTP (FastAPI)."""
