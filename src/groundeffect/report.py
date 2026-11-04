@@ -1,7 +1,12 @@
-"""Figures for the README and the model report (static PNG, light surface)."""
+"""Figures for the README and the model report (static PNG).
+
+Two themes: ``light`` (default, for the README) and ``dark`` (for slides),
+picked with ``GROUNDEFFECT_FIGURE_THEME`` or :func:`set_theme`.
+"""
 
 from __future__ import annotations
 
+import os
 from pathlib import Path
 from typing import Any
 
@@ -13,20 +18,60 @@ import numpy as np  # noqa: E402
 from matplotlib.colors import LinearSegmentedColormap  # noqa: E402
 
 # Validated reference palette (dataviz skill): fixed slot order, never cycled.
-SURFACE = "#fcfcfb"
-INK = "#0b0b0b"
-INK_2 = "#52514e"
-MUTED = "#898781"
-GRID = "#e1e0d9"
-AXIS = "#c3c2b7"
-BLUE, ORANGE, AQUA = "#2a78d6", "#eb6834", "#1baf7a"
+# Dark values are the same hues stepped for a dark surface, not an inversion.
+THEMES: dict[str, dict[str, Any]] = {
+    "light": {
+        "SURFACE": "#fcfcfb",
+        "INK": "#0b0b0b",
+        "INK_2": "#52514e",
+        "MUTED": "#898781",
+        "GRID": "#e1e0d9",
+        "AXIS": "#c3c2b7",
+        "BLUE": "#2a78d6",
+        "ORANGE": "#eb6834",
+        "AQUA": "#1baf7a",
+        "PRISM": "#cde2fb",
+        "SOLID": "#3a4658",
+        "MESH_EDGE": "#52514e",
+        "DIVERGING": ["#104281", "#2a78d6", "#9ec5f4", "#f0efec", "#f3a5a4", "#e34948", "#8f1f1f"],
+        "SEQUENTIAL": ["#f0efec", "#cde2fb", "#86b6ef", "#3987e5", "#1c5cab", "#0d366b"],
+    },
+    "dark": {
+        "SURFACE": "#1c2734",
+        "INK": "#e6ecf2",
+        "INK_2": "#afbcc9",
+        "MUTED": "#8796a6",
+        "GRID": "#2c3b4c",
+        "AXIS": "#3e4f63",
+        "BLUE": "#3987e5",
+        "ORANGE": "#d95926",
+        "AQUA": "#199e70",
+        "PRISM": "#24476e",
+        "SOLID": "#5a6b80",
+        "MESH_EDGE": "#7f8fa1",
+        "DIVERGING": ["#b7d3f6", "#5598e7", "#1c5cab", "#2c3440", "#9b2c2c", "#e66767", "#f3a5a4"],
+        "SEQUENTIAL": ["#2c3440", "#184f95", "#2a78d6", "#6da7ec", "#cde2fb"],
+    },
+}
 GOOD, CRITICAL, WARNING = "#0ca30c", "#d03b3b", "#fab219"
-CFD, SURROGATE = BLUE, ORANGE
 
-DIVERGING = LinearSegmentedColormap.from_list(
-    "blue_gray_red", ["#104281", "#2a78d6", "#9ec5f4", "#f0efec", "#f3a5a4", "#e34948", "#8f1f1f"]
-)
-SEQUENTIAL = LinearSegmentedColormap.from_list("blue_seq", ["#f0efec", "#cde2fb", "#86b6ef", "#3987e5", "#1c5cab", "#0d366b"])
+SURFACE = INK = INK_2 = MUTED = GRID = AXIS = BLUE = ORANGE = AQUA = PRISM = SOLID = MESH_EDGE = CFD = SURROGATE = ""
+DIVERGING = SEQUENTIAL = LinearSegmentedColormap.from_list("unset", ["#000000", "#ffffff"])
+
+
+def set_theme(name: str = "light") -> None:
+    """Switch every colour used by the figure functions to the named theme."""
+    global SURFACE, INK, INK_2, MUTED, GRID, AXIS, BLUE, ORANGE, AQUA, PRISM, SOLID, MESH_EDGE, CFD, SURROGATE, DIVERGING, SEQUENTIAL
+    t = THEMES[name]
+    SURFACE, INK, INK_2, MUTED, GRID, AXIS = t["SURFACE"], t["INK"], t["INK_2"], t["MUTED"], t["GRID"], t["AXIS"]
+    BLUE, ORANGE, AQUA = t["BLUE"], t["ORANGE"], t["AQUA"]
+    PRISM, SOLID, MESH_EDGE = t["PRISM"], t["SOLID"], t["MESH_EDGE"]
+    CFD, SURROGATE = BLUE, ORANGE
+    DIVERGING = LinearSegmentedColormap.from_list("blue_gray_red", t["DIVERGING"])
+    SEQUENTIAL = LinearSegmentedColormap.from_list("blue_seq", t["SEQUENTIAL"])
+
+
+set_theme(os.environ.get("GROUNDEFFECT_FIGURE_THEME", "light"))
 
 
 def style() -> None:
@@ -344,8 +389,8 @@ def mesh_zoom(
 
     fig, ax = plt.subplots(figsize=(10, 4.2))
     polys = [nodes[t] for t in tris] + [nodes[q] for q in quads]
-    colors = [SURFACE] * len(tris) + ["#cde2fb"] * len(quads)
-    ax.add_collection(PolyCollection(polys, facecolors=colors, edgecolors=INK_2, linewidths=0.15))
+    colors = [SURFACE] * len(tris) + [PRISM] * len(quads)
+    ax.add_collection(PolyCollection(polys, facecolors=colors, edgecolors=MESH_EDGE, linewidths=0.15))
     ax.set_xlim(box[0], box[1])
     ax.set_ylim(box[2], box[3])
     ax.set_aspect("equal")
@@ -375,11 +420,11 @@ def mesh_with_inset(
     x0, x1, y0, y1 = main_box
     fig, ax = plt.subplots(figsize=(11, 11 * (y1 - y0) / (x1 - x0) + 0.6))
     polys = [nodes[t] for t in tris] + [nodes[q] for q in quads]
-    colors = [SURFACE] * len(tris) + ["#cde2fb"] * len(quads)
+    colors = [SURFACE] * len(tris) + [PRISM] * len(quads)
 
     def draw(axis: plt.Axes, lw: float) -> None:
-        axis.add_collection(PolyCollection(polys, facecolors=colors, edgecolors=INK_2, linewidths=lw))
-        axis.add_patch(Polygon(wing, closed=True, facecolor="#3a4658", edgecolor=INK, linewidth=0.8))
+        axis.add_collection(PolyCollection(polys, facecolors=colors, edgecolors=MESH_EDGE, linewidths=lw))
+        axis.add_patch(Polygon(wing, closed=True, facecolor=SOLID, edgecolor=INK, linewidth=0.8))
         axis.axhline(0.0, color=INK, linewidth=2.5)
         axis.set_aspect("equal")
         axis.grid(False)
@@ -451,7 +496,7 @@ def mesh_levels(
     fig, axes = plt.subplots(1, len(levels), figsize=(panel_w * len(levels), panel_w * (y1 - y0) / (x1 - x0) + 1.1))
     pad = 0.05 * (x1 - x0)
     for ax, (nodes, tris, quads, label) in zip(np.atleast_1d(axes), levels, strict=True):
-        cells = [(c, SURFACE) for c in tris] + [(c, "#cde2fb") for c in quads]
+        cells = [(c, SURFACE) for c in tris] + [(c, PRISM) for c in quads]
         polys, colors = [], []
         for conn, color in cells:
             p = nodes[conn]
@@ -459,8 +504,8 @@ def mesh_levels(
             if x0 - pad < cx < x1 + pad and y0 - pad < cy < y1 + pad:
                 polys.append(p)
                 colors.append(color)
-        ax.add_collection(PolyCollection(polys, facecolors=colors, edgecolors=INK_2, linewidths=0.25))
-        ax.add_patch(Polygon(wing, closed=True, facecolor="#3a4658", edgecolor=INK, linewidth=0.8))
+        ax.add_collection(PolyCollection(polys, facecolors=colors, edgecolors=MESH_EDGE, linewidths=0.25))
+        ax.add_patch(Polygon(wing, closed=True, facecolor=SOLID, edgecolor=INK, linewidth=0.8))
         ax.axhline(0.0, color=INK, linewidth=2.5)
         ax.set_xlim(x0, x1)
         ax.set_ylim(y0, y1)

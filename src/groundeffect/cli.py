@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import os
 from dataclasses import asdict
 from pathlib import Path
 
@@ -189,7 +190,7 @@ def build_dataset(root: Path = RUNS / "doe", out: Path = DATA / "dataset") -> No
 
 
 ARTIFACTS = Path("artifacts")
-FIGURES = Path("docs/figures")
+FIGURES = Path(os.environ.get("GROUNDEFFECT_FIGURES_DIR", "docs/figures"))
 
 
 def _dataset_hash(path: Path) -> str:
