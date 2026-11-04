@@ -13,4 +13,6 @@ artifacts/ensemble/
 artifacts/mgn/
 artifacts/*.pt2
 data/dataset/grid.npz
+# local copies of cited papers: copyrighted, cited in docs/references.md instead
+refs/
 .DS_Store

@@ -217,3 +217,7 @@ src/groundeffect/
   - sizing fields learned from an archive of approved meshes;
   - conformal prediction intervals;
   - tunnel QA with covariate (temperature, belt, tyre) normal-behaviour models.
+
+## References
+
+The case follows Zerihan and Zhang, “Aerodynamics of a single element wing in ground effect”, *Journal of Aircraft* 37(6), 2000 ([doi:10.2514/2.2711](https://doi.org/10.2514/2.2711)). Every source the code relies on is listed in [docs/references.md](docs/references.md), along with where it is used.
