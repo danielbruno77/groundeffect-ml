@@ -3,6 +3,8 @@ name = "groundeffect"
 version = "0.1.0"
 description = "OpenFOAM-to-PyTorch pipeline for a wing in ground effect: automated meshing, QA-gated CFD data, surrogates with calibrated uncertainty, wind-tunnel data QA and CI/CD model deployment."
 readme = "README.md"
+license = "MIT"
+license-files = ["LICENSE"]
 authors = [
     { name = "Daniel Bruno", email = "danielbruno@gmail.com" }
 ]
