@@ -188,6 +188,26 @@ Example request:
 curl -s localhost:8000/predict -H 'content-type: application/json' -d '{"designs":[{"h_c":0.12,"alpha_deg":5,"camber":0.05,"thickness":0.12}],"include_cp":false}'
 ```
 
+### Run the container
+
+The `model` workflow publishes the gated inference image to GHCR, with the model baked in. It is tagged `latest` and with the commit SHA:
+
+```bash
+docker run --rm -p 8000:8000 ghcr.io/danielbruno77/groundeffect-ml:latest   # http://127.0.0.1:8000/docs
+```
+
+The image is built for `linux/amd64`. On Apple Silicon, Docker runs it under emulation; add `--platform linux/amd64` to silence the warning.
+
+To build the image yourself, train first. The model binary is not committed: CI produces it, and only a model that passed the gates is shipped. The Dockerfile copies `artifacts/ensemble.pt2`, so `docker build` fails on a fresh clone without it.
+
+```bash
+uv sync
+uv run groundeffect train --no-figures && docker build -t groundeffect .   # train exits 1 if a gate fails
+docker run --rm -p 8000:8000 groundeffect
+```
+
+The example request above works against either container.
+
 ## Layout
 
 ```
