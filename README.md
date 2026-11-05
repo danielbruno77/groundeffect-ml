@@ -55,7 +55,7 @@ A single-element inverted wing above a moving ground: a front-wing proxy in the 
 - The automatic recovery step rescued 45 of the 69 that did not.
 - **280 cases are usable** (235 train / 45 test). The remaining 24 are genuinely unsteady low-ride-height flows, which are kept and labelled, not trained on.
 
-**Surrogate on the held-out test design** (dataset `c9158e509306`, every [gate](configs/gates.yaml) passed):
+**Surrogate on the held-out test design** (dataset `1f9ca878171c`, every [gate](configs/gates.yaml) passed):
 
 | | PyTorch deep ensemble | Gaussian process | CFD noise floor (GCI) |
 |---|---|---|---|
@@ -77,14 +77,14 @@ Both surrogates are about **3× more accurate than the CFD's own discretisation 
 
 **Physics check on an unseen ride-height sweep.** Ten new CFD runs at one configuration, none of them in training:
 - Downforce rises as the gap closes, peaks near h/c ≈ 0.17, then falls. This is the classic ground-effect force-reduction regime, where the suction-side boundary layer can no longer sustain the pressure recovery.
-- Both surrogates track all ten points to within 0.005 in CL.
+- Both surrogates track all ten points to within 0.0055 in CL.
 - Outside the trained domain the ensemble's σ grows 18× at h/c = 0.05, and the API flags the request as extrapolation.
 
 ![ride height sweep](docs/figures/ride_height_sweep.png)
 
 **CFD budget.**
 - A GP trained on actively selected cases (max predictive σ, batched with the kriging believer) reaches the CFD noise floor after **48 runs**, against 60 for Sobol or random ordering. That is 20% fewer solves for the same accuracy.
-- At 96 runs its error is 30–40% lower.
+- At 96 runs its error is 29% lower than with Sobol ordering and 38% lower than with random ordering.
 - Under the FIA Aerodynamic Testing Restrictions, every solve is allocation.
 
 ![active learning](docs/figures/active_learning.png)
@@ -98,8 +98,8 @@ Both surrogates are about **3× more accurate than the CFD's own discretisation 
 ![field surrogate](docs/figures/mgn_field.png)
 
 **Wind-tunnel QA** (details [below](#wind-tunnel-data-qa)).
-- Across six random campaigns every injected fault was detected (recall 1.0 for all five fault types).
-- Drift and step flags had precision 1.0.
+- Across seven random campaigns (seeds 1–7) every injected fault was detected (recall 1.0 for all five fault types), except one blocked tap missed in seed 1.
+- Drift and step flags had precision 1.0. Spike and tap flags raised at most one false-alarm sample per campaign.
 - A +2.5% calibration drift was caught at the first datum run after onset, when it had reached about 0.5%.
 - The learned CFD→tunnel correlation recovers the injected one (k = 0.959 vs 0.96).
 
@@ -155,7 +155,7 @@ The key design choice is to **monitor residuals, not raw loads.** The detectors 
 | Workflow | What it proves |
 |---|---|
 | [`ci.yml`](.github/workflows/ci.yml) `lint` | ruff, formatting, mypy |
-| `test` | 50 unit/integration tests: geometry, meshing, OpenFOAM parsers on real solver output, GCI against an analytic solution, models, `torch.export` parity, detectors on injected faults, the HTTP API |
+| `test` | 51 unit/integration tests: geometry, meshing, OpenFOAM parsers on real solver output, GCI against an analytic solution, models, `torch.export` parity, detectors on injected faults, the HTTP API |
 | `cfd-smoke` | **a real OpenFOAM case in CI**: gmsh → gmshToFoam → simpleFoam (official OpenCFD image) → QA, asserted against physical bounds and the Cp-vs-force consistency check |
 | [`model.yml`](.github/workflows/model.yml) `train` | trains on the versioned dataset and applies [`configs/gates.yaml`](configs/gates.yaml); a failing gate fails the build and nothing is promoted. Gate table goes to the job summary |
 | `image` | builds the CPU-only inference image with the gated `torch.export` program baked in; smoke-tests `/health` and `/predict` in the container; pushes to GHCR |
@@ -169,7 +169,7 @@ The OpenFOAM runner is the same code on a laptop (Docker, arm64), in Actions (Do
 uv sync --extra cfd          # Python 3.12, locked; gmsh for meshing
 docker pull opencfd/openfoam-default:2512
 uv run pytest                # ~25 s
-uv run groundeffect smoke    # one coarse CFD case end to end, ~10 s
+uv run groundeffect smoke    # one coarse CFD case end to end, ~25 s
 uv run groundeffect train    # GP + ensemble on the committed dataset, gates, export
 uv run groundeffect serve    # http://127.0.0.1:8000/docs
 ```

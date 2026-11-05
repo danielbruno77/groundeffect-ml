@@ -193,14 +193,19 @@ ARTIFACTS = Path("artifacts")
 FIGURES = Path(os.environ.get("GROUNDEFFECT_FIGURES_DIR", "docs/figures"))
 
 
+# The versioned dataset: the committed files training reads. grid.npz (the
+# MeshGraphNet cell grids) is local-only and git-ignored, so hashing it would
+# give a different id on a laptop than in CI.
+DATASET_FILES = ("cases.csv", "manifest.json", "surface.npz")
+
+
 def _dataset_hash(path: Path) -> str:
     import hashlib
 
     h = hashlib.sha256()
-    for f in sorted(path.glob("*")):
-        if f.is_file():
-            h.update(f.name.encode())
-            h.update(f.read_bytes())
+    for name in DATASET_FILES:
+        h.update(name.encode())
+        h.update((path / name).read_bytes())
     return h.hexdigest()[:12]
 
 

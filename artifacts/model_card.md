@@ -1,6 +1,6 @@
 # Model card: ground-effect wing surrogate
 
-**Dataset** `c9158e509306`: 235 training / 45 test CFD cases
+**Dataset** `1f9ca878171c`: 235 training / 45 test CFD cases
 (2D steady RANS, k-omega SST, OpenFOAM v2512, Re = 5e5, moving ground). Only cases that passed
 convergence and mesh QA are used.
 
