@@ -16,8 +16,8 @@ jobs:
   lint:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: astral-sh/setup-uv@v6
+      - uses: actions/checkout@v7
+      - uses: astral-sh/setup-uv@v10.3.3
         with:
           enable-cache: true
       - run: uv sync --locked
@@ -28,15 +28,15 @@ jobs:
   test:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: gmsh runtime libraries
         run: sudo apt-get update && sudo apt-get install -y --no-install-recommends libglu1-mesa libxrender1 libxcursor1 libxft2 libxinerama1 libxi6
-      - uses: astral-sh/setup-uv@v6
+      - uses: astral-sh/setup-uv@v10.3.3
         with:
           enable-cache: true
       - run: uv sync --locked --extra cfd
       - run: uv run pytest --cov --cov-report=term-missing --cov-report=xml
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: coverage
           path: coverage.xml
@@ -46,17 +46,17 @@ jobs:
     # checked against physical bounds and a Cp-vs-force consistency test.
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: gmsh runtime libraries
         run: sudo apt-get update && sudo apt-get install -y --no-install-recommends libglu1-mesa libxrender1 libxcursor1 libxft2 libxinerama1 libxi6
-      - uses: astral-sh/setup-uv@v6
+      - uses: astral-sh/setup-uv@v10.3.3
         with:
           enable-cache: true
       - run: uv sync --locked --extra cfd
       - run: docker pull opencfd/openfoam-default:2512
       - run: uv run groundeffect smoke --mode docker
       - if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: cfd-smoke-logs
           path: |
