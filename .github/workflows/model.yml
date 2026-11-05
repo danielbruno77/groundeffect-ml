@@ -43,9 +43,18 @@ jobs:
           name: model
           path: artifacts/
 
+  # Each architecture is built and smoke-tested natively on its own runner,
+  # pushed as <sha>-<arch>, then joined into one multi-arch tag by `manifest`.
   image:
     needs: train
-    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - arch: amd64
+            runner: ubuntu-latest
+          - arch: arm64
+            runner: ubuntu-24.04-arm
+    runs-on: ${{ matrix.runner }}
     steps:
       - uses: actions/checkout@v7
       - uses: actions/download-artifact@v8
@@ -57,10 +66,11 @@ jobs:
         uses: docker/build-push-action@v7
         with:
           context: .
+          platforms: linux/${{ matrix.arch }}
           load: true
           tags: groundeffect:test
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          cache-from: type=gha,scope=image-${{ matrix.arch }}
+          cache-to: type=gha,mode=max,scope=image-${{ matrix.arch }}
       - name: Container smoke test
         run: |
           docker run -d --name svc -p 8000:8000 groundeffect:test
@@ -74,13 +84,28 @@ jobs:
         run: |
           echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
           IMAGE=$(echo "$IMAGE" | tr '[:upper:]' '[:lower:]')
-          docker tag groundeffect:test "$IMAGE:${GITHUB_SHA::7}"
-          docker push "$IMAGE:${GITHUB_SHA::7}"
-          if [ "$GITHUB_REF" = "refs/heads/main" ]; then docker tag groundeffect:test "$IMAGE:latest"; docker push "$IMAGE:latest"; fi
+          docker tag groundeffect:test "$IMAGE:${GITHUB_SHA::7}-${{ matrix.arch }}"
+          docker push "$IMAGE:${GITHUB_SHA::7}-${{ matrix.arch }}"
+
+  manifest:
+    needs: image
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: docker/setup-buildx-action@v4
+      - name: Publish the multi-arch tags
+        run: |
+          echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
+          IMAGE=$(echo "$IMAGE" | tr '[:upper:]' '[:lower:]')
+          SHA=${GITHUB_SHA::7}
+          TAGS=(-t "$IMAGE:$SHA")
+          if [ "$GITHUB_REF" = "refs/heads/main" ]; then TAGS+=(-t "$IMAGE:latest"); fi
+          docker buildx imagetools create "${TAGS[@]}" "$IMAGE:$SHA-amd64" "$IMAGE:$SHA-arm64"
+          docker buildx imagetools inspect "$IMAGE:$SHA"
 
   release:
     if: startsWith(github.ref, 'refs/tags/v')
-    needs: [train, image]
+    needs: [train, manifest]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/download-artifact@v8

@@ -158,7 +158,8 @@ The key design choice is to **monitor residuals, not raw loads.** The detectors 
 | `test` | 51 unit/integration tests: geometry, meshing, OpenFOAM parsers on real solver output, GCI against an analytic solution, models, `torch.export` parity, detectors on injected faults, the HTTP API |
 | `cfd-smoke` | **a real OpenFOAM case in CI**: gmsh → gmshToFoam → simpleFoam (official OpenCFD image) → QA, asserted against physical bounds and the Cp-vs-force consistency check |
 | [`model.yml`](.github/workflows/model.yml) `train` | trains on the versioned dataset and applies [`configs/gates.yaml`](configs/gates.yaml); a failing gate fails the build and nothing is promoted. Gate table goes to the job summary |
-| `image` | builds the CPU-only inference image with the gated `torch.export` program baked in; smoke-tests `/health` and `/predict` in the container; pushes to GHCR |
+| `image` | builds the CPU-only inference image with the gated `torch.export` program baked in, natively for amd64 and arm64 on separate runners; smoke-tests `/health` and `/predict` in each container; pushes to GHCR |
+| `manifest` | joins the two architectures under one multi-arch tag (`latest` and the commit SHA), so `docker pull` picks the right one |
 | `release` | on a `v*` tag: GitHub release with the model and its [model card](artifacts/model_card.md) |
 
 The OpenFOAM runner is the same code on a laptop (Docker, arm64), in Actions (Docker, amd64) and on an HPC node with a native install (`--mode native`).
@@ -196,7 +197,7 @@ The `model` workflow publishes the gated inference image to GHCR, with the model
 docker run --rm -p 8000:8000 ghcr.io/danielbruno77/groundeffect-ml:latest   # http://127.0.0.1:8000/docs
 ```
 
-The image is built for `linux/amd64`. On Apple Silicon, Docker runs it under emulation; add `--platform linux/amd64` to silence the warning.
+The image is multi-arch (`linux/amd64` and `linux/arm64`), so it runs natively on Intel/AMD machines and on Apple Silicon Macs.
 
 To build the image yourself, train first. The model binary is not committed: CI produces it, and only a model that passed the gates is shipped. The Dockerfile copies `artifacts/ensemble.pt2`, so `docker build` fails on a fresh clone without it.
 
