@@ -40,3 +40,16 @@ def test_cli_imports_without_gmsh():
 
     code = "import sys; sys.modules['gmsh'] = None; import groundeffect.cli, groundeffect.serve"
     assert subprocess.run([sys.executable, "-c", code], capture_output=True).returncode == 0
+
+
+def test_dataset_hash_ignores_local_files(tmp_path):
+    # A local-only grid.npz must not change the id: CI and a laptop agree.
+    from groundeffect.cli import DATASET_FILES, _dataset_hash
+
+    for name in DATASET_FILES:
+        (tmp_path / name).write_bytes(name.encode())
+    before = _dataset_hash(tmp_path)
+    (tmp_path / "grid.npz").write_bytes(b"local only")
+    assert _dataset_hash(tmp_path) == before
+    (tmp_path / "cases.csv").write_bytes(b"changed")
+    assert _dataset_hash(tmp_path) != before
